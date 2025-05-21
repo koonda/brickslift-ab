@@ -450,19 +450,59 @@ class TestController extends WP_REST_Controller {
 
 
         // Meta fields
-        $meta_fields = [ '_blft_ab_status', '_blft_ab_description', '_blft_ab_variants' ];
+        $all_meta_keys = [
+            '_blft_ab_status', '_blft_ab_description', '_blft_ab_variants',
+            '_blft_ab_goal_type',
+            '_blft_ab_goal_pv_url', '_blft_ab_goal_pv_url_match_type',
+            '_blft_ab_goal_sc_element_selector',
+            '_blft_ab_goal_fs_form_selector', '_blft_ab_goal_fs_trigger', '_blft_ab_goal_fs_thank_you_url', '_blft_ab_goal_fs_success_class',
+            '_blft_ab_goal_wc_any_product', '_blft_ab_goal_wc_product_id',
+            '_blft_ab_goal_sd_percentage',
+            '_blft_ab_goal_top_seconds',
+            '_blft_ab_goal_cje_event_name',
+        ];
         $post_data['meta'] = [];
-        foreach ( $meta_fields as $meta_key ) {
-            if ( isset( $schema['properties']['meta']['properties'][ $meta_key ] ) ) {
-                 $meta_value = get_post_meta( $item->ID, $meta_key, true );
-                 // Provide default if meta not set, especially for variants array
-                if ($meta_key === '_blft_ab_variants' && $meta_value === '') {
-                    $meta_value = [];
-                } else if ($meta_key === '_blft_ab_status' && $meta_value === '') {
-                    $meta_value = 'draft';
+        foreach ( $all_meta_keys as $meta_key ) {
+            // Check against schema if available, or just fetch if not (for robustness during schema updates)
+            // if ( isset( $schema['properties']['meta']['properties'][ $meta_key ] ) ) {
+                $meta_value = get_post_meta( $item->ID, $meta_key, true );
+                
+                // Provide defaults for specific meta keys if they are not set or empty
+                if ( $meta_value === '' ) {
+                    switch ( $meta_key ) {
+                        case '_blft_ab_variants':
+                            $meta_value = [];
+                            break;
+                        case '_blft_ab_status':
+                            $meta_value = 'draft';
+                            break;
+                        case '_blft_ab_goal_type':
+                            $meta_value = ''; // Or a sensible default like 'page_visit'
+                            break;
+                        case '_blft_ab_goal_pv_url_match_type':
+                            $meta_value = 'exact';
+                            break;
+                        case '_blft_ab_goal_fs_trigger':
+                            $meta_value = 'submit_event';
+                            break;
+                        case '_blft_ab_goal_wc_any_product':
+                            // get_post_meta for boolean might return empty string if not set, cast to bool
+                            $meta_value = true; // Default to true
+                            break;
+                        // Add other defaults if necessary
+                    }
                 }
+                // Ensure boolean for _blft_ab_goal_wc_any_product
+                if ($meta_key === '_blft_ab_goal_wc_any_product') {
+                    $meta_value = filter_var($meta_value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+                }
+                // Ensure integers for relevant fields
+                if (in_array($meta_key, ['_blft_ab_goal_wc_product_id', '_blft_ab_goal_sd_percentage', '_blft_ab_goal_top_seconds'])) {
+                    $meta_value = $meta_value === '' ? 0 : (int) $meta_value;
+                }
+
                 $post_data['meta'][ $meta_key ] = $meta_value;
-            }
+            // }
         }
         
         $context = ! empty( $request['context'] ) ? $request['context'] : 'view';
@@ -502,36 +542,78 @@ class TestController extends WP_REST_Controller {
      */
     protected function update_additional_fields_for_object( $post, $request ) {
         $meta_update_allowed = [
-            '_blft_ab_status',
-            '_blft_ab_description',
-            '_blft_ab_variants',
+            '_blft_ab_status', '_blft_ab_description', '_blft_ab_variants',
+            '_blft_ab_goal_type',
+            '_blft_ab_goal_pv_url', '_blft_ab_goal_pv_url_match_type',
+            '_blft_ab_goal_sc_element_selector',
+            '_blft_ab_goal_fs_form_selector', '_blft_ab_goal_fs_trigger', '_blft_ab_goal_fs_thank_you_url', '_blft_ab_goal_fs_success_class',
+            '_blft_ab_goal_wc_any_product', '_blft_ab_goal_wc_product_id',
+            '_blft_ab_goal_sd_percentage',
+            '_blft_ab_goal_top_seconds',
+            '_blft_ab_goal_cje_event_name',
         ];
 
         if ( isset( $request['meta'] ) && is_array( $request['meta'] ) ) {
             foreach ( $request['meta'] as $key => $value ) {
                 if ( in_array( $key, $meta_update_allowed ) ) {
-                    // Sanitize based on type defined in CPTManager's register_meta_fields
-                    $sanitized_value = $value; // Default to raw value
-                    if ( $key === '_blft_ab_status' ) {
-                        $sanitized_value = sanitize_text_field( $value );
-                        if(!in_array($sanitized_value, ['draft', 'running', 'paused', 'completed'])) {
-                            $sanitized_value = 'draft'; // Default if invalid
-                        }
-                    } elseif ( $key === '_blft_ab_description' ) {
-                        $sanitized_value = sanitize_textarea_field( $value );
-                    } elseif ( $key === '_blft_ab_variants' ) {
-                        // Basic sanitization for variants array
-                        if ( is_array( $value ) ) {
-                            $sanitized_value = array_map( function( $variant ) {
-                                $clean_variant = [];
-                                $clean_variant['id'] = isset( $variant['id'] ) ? sanitize_text_field( $variant['id'] ) : wp_generate_uuid4();
-                                $clean_variant['name'] = isset( $variant['name'] ) ? sanitize_text_field( $variant['name'] ) : '';
-                                $clean_variant['distribution'] = isset( $variant['distribution'] ) ? absint( $variant['distribution'] ) : 0;
-                                return $clean_variant;
-                            }, $value );
-                        } else {
-                            $sanitized_value = []; // Default to empty array if not an array
-                        }
+                    $sanitized_value = $value; // Default to raw value, specific sanitizers below
+
+                    switch ($key) {
+                        case '_blft_ab_status':
+                            $sanitized_value = sanitize_text_field( $value );
+                            if(!in_array($sanitized_value, ['draft', 'running', 'paused', 'completed'])) {
+                                $sanitized_value = 'draft';
+                            }
+                            break;
+                        case '_blft_ab_description':
+                            $sanitized_value = sanitize_textarea_field( $value );
+                            break;
+                        case '_blft_ab_variants':
+                            if ( is_array( $value ) ) {
+                                $sanitized_value = array_map( function( $variant ) {
+                                    $clean_variant = [];
+                                    $clean_variant['id'] = isset( $variant['id'] ) ? sanitize_text_field( $variant['id'] ) : wp_generate_uuid4();
+                                    $clean_variant['name'] = isset( $variant['name'] ) ? sanitize_text_field( $variant['name'] ) : '';
+                                    $clean_variant['distribution'] = isset( $variant['distribution'] ) ? absint( $variant['distribution'] ) : 0;
+                                    return $clean_variant;
+                                }, $value );
+                            } else {
+                                $sanitized_value = [];
+                            }
+                            break;
+                        case '_blft_ab_goal_type':
+                            $sanitized_value = sanitize_text_field( $value );
+                            // Potentially validate against a list of known goal types
+                            break;
+                        case '_blft_ab_goal_pv_url':
+                        case '_blft_ab_goal_fs_thank_you_url':
+                            $sanitized_value = esc_url_raw( $value );
+                            break;
+                        case '_blft_ab_goal_pv_url_match_type':
+                        case '_blft_ab_goal_fs_trigger':
+                            $sanitized_value = sanitize_key( $value );
+                            break;
+                        case '_blft_ab_goal_sc_element_selector':
+                        case '_blft_ab_goal_fs_form_selector':
+                        case '_blft_ab_goal_cje_event_name':
+                            $sanitized_value = sanitize_text_field( $value );
+                            break;
+                        case '_blft_ab_goal_fs_success_class':
+                            $sanitized_value = sanitize_html_class( $value );
+                            break;
+                        case '_blft_ab_goal_wc_any_product':
+                            $sanitized_value = rest_sanitize_boolean( $value );
+                            break;
+                        case '_blft_ab_goal_wc_product_id':
+                        case '_blft_ab_goal_sd_percentage':
+                        case '_blft_ab_goal_top_seconds':
+                            $sanitized_value = absint( $value );
+                            break;
+                        default:
+                            // For any other meta keys that might be added to $meta_update_allowed
+                            // but not explicitly handled, apply a generic sanitizer or log a notice.
+                            // For now, we assume all allowed keys are handled.
+                            break;
                     }
                     update_post_meta( $post->ID, $key, $sanitized_value );
                 }
@@ -666,6 +748,96 @@ class TestController extends WP_REST_Controller {
                                 // Custom sanitization handled in update_additional_fields_for_object
                                 'default'           => [],
                             ],
+                        ],
+                        // Goal Type
+                        '_blft_ab_goal_type' => [
+                            'description' => __('The type of conversion goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_text_field', 'default' => ''],
+                        ],
+                        // Page Visit Goal
+                        '_blft_ab_goal_pv_url' => [
+                            'description' => __('Target URL for page visit goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'format'      => 'uri',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'esc_url_raw', 'default' => ''],
+                        ],
+                        '_blft_ab_goal_pv_url_match_type' => [
+                            'description' => __('URL match type for page visit goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'enum'        => ['exact', 'contains', 'starts_with', 'ends_with'],
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_key', 'default' => 'exact'],
+                        ],
+                        // Selector Click Goal
+                        '_blft_ab_goal_sc_element_selector' => [
+                            'description' => __('CSS selector for click goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_text_field', 'default' => ''],
+                        ],
+                        // Form Submission Goal
+                        '_blft_ab_goal_fs_form_selector' => [
+                            'description' => __('CSS selector for the form.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_text_field', 'default' => ''],
+                        ],
+                        '_blft_ab_goal_fs_trigger' => [
+                            'description' => __('Trigger for form submission goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'enum'        => ['submit_event', 'thank_you_page', 'success_class'],
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_key', 'default' => 'submit_event'],
+                        ],
+                        '_blft_ab_goal_fs_thank_you_url' => [
+                            'description' => __('Thank you page URL for form submission goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'format'      => 'uri',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'esc_url_raw', 'default' => ''],
+                        ],
+                        '_blft_ab_goal_fs_success_class' => [
+                            'description' => __('Success class added to form for form submission goal.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_html_class', 'default' => ''],
+                        ],
+                        // WooCommerce Add to Cart Goal
+                        '_blft_ab_goal_wc_any_product' => [
+                            'description' => __('Track add to cart for any product.', 'brickslift-ab'),
+                            'type'        => 'boolean',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'rest_sanitize_boolean', 'default' => true],
+                        ],
+                        '_blft_ab_goal_wc_product_id' => [
+                            'description' => __('Specific product ID for WooCommerce add to cart goal.', 'brickslift-ab'),
+                            'type'        => 'integer',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'absint', 'default' => 0],
+                        ],
+                        // Scroll Depth Goal
+                        '_blft_ab_goal_sd_percentage' => [
+                            'description' => __('Scroll depth percentage.', 'brickslift-ab'),
+                            'type'        => 'integer',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'absint', 'default' => 0],
+                        ],
+                        // Time on Page Goal
+                        '_blft_ab_goal_top_seconds' => [
+                            'description' => __('Time on page in seconds.', 'brickslift-ab'),
+                            'type'        => 'integer',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'absint', 'default' => 0],
+                        ],
+                        // Custom JS Event Goal
+                        '_blft_ab_goal_cje_event_name' => [
+                            'description' => __('Custom JavaScript event name.', 'brickslift-ab'),
+                            'type'        => 'string',
+                            'context'     => ['view', 'edit'],
+                            'arg_options' => ['sanitize_callback' => 'sanitize_text_field', 'default' => ''],
                         ],
                     ],
                 ],

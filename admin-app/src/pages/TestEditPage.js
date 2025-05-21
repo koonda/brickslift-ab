@@ -15,10 +15,27 @@ import {
 } from '@mui/material';
 import TestFormBasicInfo from '../components/TestFormBasicInfo';
 import TestFormVariants from '../components/TestFormVariants';
+import TestFormGoals from '../components/TestFormGoals'; // Import TestFormGoals
 import { fetchTest, createTest, updateTest } from '../services/api';
 import { generateUUID } from '../utils/helpers';
 
-const steps = ['Basic Information', 'Variants']; // Add 'Goals', 'Settings' in later phases
+const steps = ['Basic Information', 'Variants', 'Conversion Goal']; // Added 'Conversion Goal'
+
+const initialGoalData = {
+    _blft_ab_goal_type: '',
+    _blft_ab_goal_pv_url: '',
+    _blft_ab_goal_pv_url_match_type: 'exact',
+    _blft_ab_goal_sc_element_selector: '',
+    _blft_ab_goal_fs_form_selector: '',
+    _blft_ab_goal_fs_trigger: 'submit_event',
+    _blft_ab_goal_fs_thank_you_url: '',
+    _blft_ab_goal_fs_success_class: '',
+    _blft_ab_goal_wc_any_product: true,
+    _blft_ab_goal_wc_product_id: '',
+    _blft_ab_goal_sd_percentage: '',
+    _blft_ab_goal_top_seconds: '',
+    _blft_ab_goal_cje_event_name: '',
+};
 
 const initialFormData = {
   basicInfo: {
@@ -26,13 +43,14 @@ const initialFormData = {
     description: '',
   },
   variants: [], // { id: 'uuid', name: 'Variant A', distribution: 50 }
-  // goal: {}, // For future phases
+  goalData: { ...initialGoalData }, // Initialize goalData
   // settings: {}, // For future phases
   status: 'draft', // WP post status
   meta: {
     _blft_ab_status: 'draft', // Plugin's internal status
     _blft_ab_description: '',
     _blft_ab_variants: [],
+    ...initialGoalData, // Spread initial goal data into meta as well
   }
 };
 
@@ -63,11 +81,39 @@ const TestEditPage = () => {
             description: testData.meta?._blft_ab_description || '',
           },
           variants: testData.meta?._blft_ab_variants || [],
+          goalData: { // Populate goalData from fetched meta
+            _blft_ab_goal_type: testData.meta?._blft_ab_goal_type || '',
+            _blft_ab_goal_pv_url: testData.meta?._blft_ab_goal_pv_url || '',
+            _blft_ab_goal_pv_url_match_type: testData.meta?._blft_ab_goal_pv_url_match_type || 'exact',
+            _blft_ab_goal_sc_element_selector: testData.meta?._blft_ab_goal_sc_element_selector || '',
+            _blft_ab_goal_fs_form_selector: testData.meta?._blft_ab_goal_fs_form_selector || '',
+            _blft_ab_goal_fs_trigger: testData.meta?._blft_ab_goal_fs_trigger || 'submit_event',
+            _blft_ab_goal_fs_thank_you_url: testData.meta?._blft_ab_goal_fs_thank_you_url || '',
+            _blft_ab_goal_fs_success_class: testData.meta?._blft_ab_goal_fs_success_class || '',
+            _blft_ab_goal_wc_any_product: testData.meta?._blft_ab_goal_wc_any_product === undefined ? true : Boolean(testData.meta._blft_ab_goal_wc_any_product),
+            _blft_ab_goal_wc_product_id: testData.meta?._blft_ab_goal_wc_product_id || '',
+            _blft_ab_goal_sd_percentage: testData.meta?._blft_ab_goal_sd_percentage || '',
+            _blft_ab_goal_top_seconds: testData.meta?._blft_ab_goal_top_seconds || '',
+            _blft_ab_goal_cje_event_name: testData.meta?._blft_ab_goal_cje_event_name || '',
+          },
           status: testData.status || 'draft',
-          meta: {
+          meta: { // Ensure all meta fields are populated
             _blft_ab_status: testData.meta?._blft_ab_status || 'draft',
             _blft_ab_description: testData.meta?._blft_ab_description || '',
             _blft_ab_variants: testData.meta?._blft_ab_variants || [],
+            _blft_ab_goal_type: testData.meta?._blft_ab_goal_type || '',
+            _blft_ab_goal_pv_url: testData.meta?._blft_ab_goal_pv_url || '',
+            _blft_ab_goal_pv_url_match_type: testData.meta?._blft_ab_goal_pv_url_match_type || 'exact',
+            _blft_ab_goal_sc_element_selector: testData.meta?._blft_ab_goal_sc_element_selector || '',
+            _blft_ab_goal_fs_form_selector: testData.meta?._blft_ab_goal_fs_form_selector || '',
+            _blft_ab_goal_fs_trigger: testData.meta?._blft_ab_goal_fs_trigger || 'submit_event',
+            _blft_ab_goal_fs_thank_you_url: testData.meta?._blft_ab_goal_fs_thank_you_url || '',
+            _blft_ab_goal_fs_success_class: testData.meta?._blft_ab_goal_fs_success_class || '',
+            _blft_ab_goal_wc_any_product: testData.meta?._blft_ab_goal_wc_any_product === undefined ? true : Boolean(testData.meta._blft_ab_goal_wc_any_product),
+            _blft_ab_goal_wc_product_id: testData.meta?._blft_ab_goal_wc_product_id || '',
+            _blft_ab_goal_sd_percentage: testData.meta?._blft_ab_goal_sd_percentage || '',
+            _blft_ab_goal_top_seconds: testData.meta?._blft_ab_goal_top_seconds || '',
+            _blft_ab_goal_cje_event_name: testData.meta?._blft_ab_goal_cje_event_name || '',
           }
         });
       } catch (err) {
@@ -113,6 +159,13 @@ const TestEditPage = () => {
                 meta: { ...prev.meta, _blft_ab_variants: data }
             };
         }
+        if (section === 'goalData') {
+            return {
+                ...prev,
+                goalData: data,
+                meta: { ...prev.meta, ...data } // Spread goal data into meta
+            };
+        }
         return prev;
     });
   };
@@ -143,6 +196,20 @@ const TestEditPage = () => {
             if (totalDistribution !== 100) {
                 errors.variants_general = (errors.variants_general ? errors.variants_general + " " : "") + `Total distribution must be 100%. Current: ${totalDistribution}%.`;
             }
+        }
+    }
+    if (activeStep === 2) { // Conversion Goal
+        if (!formData.goalData._blft_ab_goal_type) {
+            errors.goal_type = 'Goal type is required.';
+        } else {
+            // Add specific validations for each goal type if needed
+            if (formData.goalData._blft_ab_goal_type === 'page_visit' && !formData.goalData._blft_ab_goal_pv_url?.trim()) {
+                errors.goal_pv_url = 'Target Page URL is required for Page Visit goal.';
+            }
+            if (formData.goalData._blft_ab_goal_type === 'selector_click' && !formData.goalData._blft_ab_goal_sc_element_selector?.trim()) {
+                errors.goal_sc_element_selector = 'Element CSS Selector is required for Selector Click goal.';
+            }
+            // TODO: Add more validations for other goal types
         }
     }
     setValidationErrors(errors);
@@ -199,6 +266,20 @@ const TestEditPage = () => {
         _blft_ab_status: formData.meta._blft_ab_status || 'draft', // Plugin specific status
         _blft_ab_description: formData.basicInfo.description,
         _blft_ab_variants: formData.variants,
+        // Add goal data to meta payload
+        _blft_ab_goal_type: formData.goalData._blft_ab_goal_type,
+        _blft_ab_goal_pv_url: formData.goalData._blft_ab_goal_pv_url,
+        _blft_ab_goal_pv_url_match_type: formData.goalData._blft_ab_goal_pv_url_match_type,
+        _blft_ab_goal_sc_element_selector: formData.goalData._blft_ab_goal_sc_element_selector,
+        _blft_ab_goal_fs_form_selector: formData.goalData._blft_ab_goal_fs_form_selector,
+        _blft_ab_goal_fs_trigger: formData.goalData._blft_ab_goal_fs_trigger,
+        _blft_ab_goal_fs_thank_you_url: formData.goalData._blft_ab_goal_fs_thank_you_url,
+        _blft_ab_goal_fs_success_class: formData.goalData._blft_ab_goal_fs_success_class,
+        _blft_ab_goal_wc_any_product: Boolean(formData.goalData._blft_ab_goal_wc_any_product),
+        _blft_ab_goal_wc_product_id: formData.goalData._blft_ab_goal_wc_product_id ? parseInt(formData.goalData._blft_ab_goal_wc_product_id, 10) : 0,
+        _blft_ab_goal_sd_percentage: formData.goalData._blft_ab_goal_sd_percentage ? parseInt(formData.goalData._blft_ab_goal_sd_percentage, 10) : 0,
+        _blft_ab_goal_top_seconds: formData.goalData._blft_ab_goal_top_seconds ? parseInt(formData.goalData._blft_ab_goal_top_seconds, 10) : 0,
+        _blft_ab_goal_cje_event_name: formData.goalData._blft_ab_goal_cje_event_name,
       },
     };
     console.log('Submitting test data:', payload);
@@ -234,7 +315,9 @@ const TestEditPage = () => {
         return <TestFormBasicInfo formData={formData} handleChange={handleFormChange} errors={validationErrors} />;
       case 1:
         return <TestFormVariants formData={formData} handleChange={handleFormChange} errors={validationErrors} />;
-      // Add cases for 'Goals', 'Settings' in later phases
+      case 2: // New case for Conversion Goal
+        return <TestFormGoals goalData={formData.goalData} onGoalDataChange={(data) => handleFormChange('goalData', data)} errors={validationErrors} />;
+      // Add cases for 'Settings' in later phases
       default:
         return 'Unknown step';
     }

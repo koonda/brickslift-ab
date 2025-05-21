@@ -110,8 +110,118 @@ class CPTManager {
                 'default'           => [],
                 // Custom sanitization will be needed in REST controller for array of objects.
             ],
-            // Add other meta fields here as per Phase 1 scope, if any.
-            // For now, only status, description, and variants are primary for Phase 1 CRUD.
+            // Goal Type
+            '_blft_ab_goal_type' => [
+                'type' => 'string',
+                'description' => __('The type of conversion goal.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '', // e.g., 'page_visit'
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            // Page Visit Goal
+            '_blft_ab_goal_pv_url' => [
+                'type' => 'string',
+                'description' => __('Target URL for page visit goal.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '',
+                'sanitize_callback' => 'esc_url_raw',
+            ],
+            '_blft_ab_goal_pv_url_match_type' => [
+                'type' => 'string',
+                'description' => __('URL match type for page visit goal (exact, contains, starts_with, ends_with).', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => 'exact',
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            // Selector Click Goal
+            '_blft_ab_goal_sc_element_selector' => [
+                'type' => 'string',
+                'description' => __('CSS selector for click goal.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '',
+                'sanitize_callback' => 'sanitize_text_field', // Consider more specific selector sanitization if needed
+            ],
+            // Form Submission Goal
+            '_blft_ab_goal_fs_form_selector' => [
+                'type' => 'string',
+                'description' => __('CSS selector for the form.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            '_blft_ab_goal_fs_trigger' => [
+                'type' => 'string',
+                'description' => __('Trigger for form submission goal (submit_event, thank_you_page, success_class).', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => 'submit_event',
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            '_blft_ab_goal_fs_thank_you_url' => [
+                'type' => 'string',
+                'description' => __('Thank you page URL for form submission goal.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '',
+                'sanitize_callback' => 'esc_url_raw',
+            ],
+            '_blft_ab_goal_fs_success_class' => [
+                'type' => 'string',
+                'description' => __('Success class added to form for form submission goal.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '',
+                'sanitize_callback' => 'sanitize_html_class',
+            ],
+            // WooCommerce Add to Cart Goal
+            '_blft_ab_goal_wc_any_product' => [
+                'type' => 'boolean',
+                'description' => __('Track add to cart for any product.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => true,
+                'sanitize_callback' => 'rest_sanitize_boolean',
+            ],
+            '_blft_ab_goal_wc_product_id' => [
+                'type' => 'integer',
+                'description' => __('Specific product ID for WooCommerce add to cart goal.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => 0,
+                'sanitize_callback' => 'absint',
+            ],
+            // Scroll Depth Goal
+            '_blft_ab_goal_sd_percentage' => [
+                'type' => 'integer',
+                'description' => __('Scroll depth percentage.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => 0,
+                'sanitize_callback' => 'absint',
+            ],
+            // Time on Page Goal
+            '_blft_ab_goal_top_seconds' => [
+                'type' => 'integer',
+                'description' => __('Time on page in seconds.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => 0,
+                'sanitize_callback' => 'absint',
+            ],
+            // Custom JS Event Goal
+            '_blft_ab_goal_cje_event_name' => [
+                'type' => 'string',
+                'description' => __('Custom JavaScript event name.', 'brickslift-ab'),
+                'single' => true,
+                'show_in_rest' => true,
+                'default' => '',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
         ];
 
         foreach ( $meta_fields as $meta_key => $args ) {
