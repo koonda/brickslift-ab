@@ -142,7 +142,8 @@ const TestListPage = () => {
             {tests.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((test) => (
               <TableRow hover key={test.id}>
                 <TableCell component="th" scope="row">
-                  {test.title?.rendered || test.title || '(No Title)'}
+                  {/* Ensure we are rendering a string. test.title from API is an object { raw: ..., rendered: ... } */}
+                  {(test.title && typeof test.title.rendered === 'string') ? test.title.rendered : '(No Title)'}
                 </TableCell>
                 <TableCell>{test.meta?._blft_ab_status || 'N/A'}</TableCell>
                 <TableCell>
