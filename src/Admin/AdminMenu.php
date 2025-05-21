@@ -82,28 +82,35 @@ class AdminMenu {
             }
         }
         
-        $script_asset_path = BLFT_AB_PLUGIN_DIR . 'admin-app/build/index.asset.php';
+        // According to workflow logs, assets are directly in admin-app, not admin-app/build in the zip.
+        $script_asset_path = BLFT_AB_PLUGIN_DIR . 'admin-app/index.asset.php';
         if ( ! file_exists( $script_asset_path ) ) {
             error_log( '[BricksLift A/B] Admin App Error: Script asset file not found at ' . $script_asset_path );
-            wp_die( 'BricksLift A/B Error: Admin app asset file not found. Please run `npm run build` in the admin-app directory.' );
+            wp_die( 'BricksLift A/B Error: Admin app asset file not found. Please run `npm run build` in the admin-app directory. Path checked: ' . $script_asset_path );
             return;
         }
         $script_asset = require( $script_asset_path );
 
         wp_enqueue_script(
             'brickslift-ab-admin-app',
-            BLFT_AB_PLUGIN_URL . 'admin-app/build/index.js',
+            BLFT_AB_PLUGIN_URL . 'admin-app/index.js',
             $script_asset['dependencies'],
             $script_asset['version'],
             true // In footer
         );
 
-        wp_enqueue_style(
-            'brickslift-ab-admin-app-style',
-            BLFT_AB_PLUGIN_URL . 'admin-app/build/index.css',
-            [], // Dependencies like wp-components if needed
-            $script_asset['version']
-        );
+        // Check if index.css exists before enqueuing, as it might not be generated if no CSS is output.
+        $style_path = BLFT_AB_PLUGIN_DIR . 'admin-app/index.css';
+        if ( file_exists( $style_path ) ) {
+            wp_enqueue_style(
+                'brickslift-ab-admin-app-style',
+                BLFT_AB_PLUGIN_URL . 'admin-app/index.css',
+                [], // Dependencies like wp-components if needed
+                $script_asset['version']
+            );
+        } else {
+            error_log( '[BricksLift A/B] Admin App Info: index.css not found at ' . $style_path . '. Not enqueuing.' );
+        }
 
         // Localize script with data for React app
         wp_localize_script(
