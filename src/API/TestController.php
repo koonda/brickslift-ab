@@ -134,10 +134,11 @@ class TestController extends WP_REST_Controller {
     public function get_items( $request ) {
         $args = [
             'post_type'      => $this->post_type,
-            'posts_per_page' => $request['per_page'],
-            'paged'          => $request['page'],
-            'orderby'        => $request['orderby'],
-            'order'          => $request['order'],
+            'posts_per_page' => $request['per_page'] ?: -1, // Fetch all if not specified
+            'paged'          => $request['page'] ?: 1,
+            'orderby'        => $request['orderby'] ?: 'date',
+            'order'          => $request['order'] ?: 'DESC',
+            'post_status'    => ['publish', 'draft', 'pending', 'private', 'future'], // Fetch all relevant statuses
         ];
 
         if ( ! empty( $request['search'] ) ) {
