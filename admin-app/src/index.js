@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ThemeProvider, createTheme, GlobalStyles } from '@mui/material/styles'; // Import GlobalStyles
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import GlobalStyles from '@mui/material/GlobalStyles'; // More direct import for GlobalStyles
 import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
 
