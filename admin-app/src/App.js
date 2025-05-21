@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom'; // Added NavLink
 import { Box, Typography, Container, AppBar, Toolbar, CssBaseline, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ListAltIcon from '@mui/icons-material/ListAlt';
@@ -55,7 +55,7 @@ function App() {
   
   // Helper for NavLink active state (optional, or use NavLink's isActive prop)
   const RouterNavLink = React.forwardRef((props, ref) => (
-    <RouterLink ref={ref} {...props} />
+    <NavLink ref={ref} {...props} /> // Changed RouterLink to NavLink
   ));
 
 
