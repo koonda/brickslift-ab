@@ -31,20 +31,21 @@ function App() {
       </Toolbar>
       <Divider />
       <List>
-        {/* <ListItem disablePadding component={RouterNavLink} to="/">
-          <ListItemButton>
+        {/* Dashboard Link Example - if re-enabled */}
+        {/* <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/">
             <ListItemIcon><DashboardIcon /></ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItemButton>
         </ListItem> */}
-        <ListItem disablePadding component={RouterNavLink} to="/tests">
-          <ListItemButton>
+        <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/tests">
             <ListItemIcon><ListAltIcon /></ListItemIcon>
             <ListItemText primary="A/B Tests" />
           </ListItemButton>
         </ListItem>
-         <ListItem disablePadding component={RouterNavLink} to="/tests/new">
-          <ListItemButton>
+         <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/tests/new">
             <ListItemIcon><AddCircleOutlineIcon /></ListItemIcon>
             <ListItemText primary="Create Test" />
           </ListItemButton>
@@ -53,11 +54,7 @@ function App() {
     </Box>
   );
   
-  // Helper for NavLink active state (optional, or use NavLink's isActive prop)
-  const RouterNavLink = React.forwardRef((props, ref) => (
-    <NavLink ref={ref} {...props} /> // Changed RouterLink to NavLink
-  ));
-
+  // Removed RouterNavLink component
 
   return (
     <Router>
