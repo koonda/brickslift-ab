@@ -463,46 +463,42 @@ class TestController extends WP_REST_Controller {
         ];
         $post_data['meta'] = [];
         foreach ( $all_meta_keys as $meta_key ) {
-            // Check against schema if available, or just fetch if not (for robustness during schema updates)
-            // if ( isset( $schema['properties']['meta']['properties'][ $meta_key ] ) ) {
-                $meta_value = get_post_meta( $item->ID, $meta_key, true );
-                
-                // Provide defaults for specific meta keys if they are not set or empty
-                if ( $meta_value === '' ) {
-                    switch ( $meta_key ) {
-                        case '_blft_ab_variants':
-                            $meta_value = [];
-                            break;
-                        case '_blft_ab_status':
-                            $meta_value = 'draft';
-                            break;
-                        case '_blft_ab_goal_type':
-                            $meta_value = ''; // Or a sensible default like 'page_visit'
-                            break;
-                        case '_blft_ab_goal_pv_url_match_type':
-                            $meta_value = 'exact';
-                            break;
-                        case '_blft_ab_goal_fs_trigger':
-                            $meta_value = 'submit_event';
-                            break;
-                        case '_blft_ab_goal_wc_any_product':
-                            // get_post_meta for boolean might return empty string if not set, cast to bool
-                            $meta_value = true; // Default to true
-                            break;
-                        // Add other defaults if necessary
-                    }
-                }
-                // Ensure boolean for _blft_ab_goal_wc_any_product
-                if ($meta_key === '_blft_ab_goal_wc_any_product') {
-                    $meta_value = filter_var($meta_value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
-                }
-                // Ensure integers for relevant fields
-                if (in_array($meta_key, ['_blft_ab_goal_wc_product_id', '_blft_ab_goal_sd_percentage', '_blft_ab_goal_top_seconds'])) {
-                    $meta_value = $meta_value === '' ? 0 : (int) $meta_value;
-                }
+            $meta_value = get_post_meta( $item->ID, $meta_key, true );
+            
+            // Try to get default from schema if defined in CPTManager
+            $schema_for_this_key = $schema['properties']['meta']['properties'][$meta_key] ?? null;
+            $default_from_schema = null;
+            if (isset($schema_for_this_key['arg_options']['default'])) {
+                $default_from_schema = $schema_for_this_key['arg_options']['default'];
+            } elseif (isset($schema_for_this_key['default'])) { // Some schemas might use 'default' directly
+                 $default_from_schema = $schema_for_this_key['default'];
+            }
 
-                $post_data['meta'][ $meta_key ] = $meta_value;
-            // }
+            if ( $meta_value === '' && $default_from_schema !== null ) {
+                $meta_value = $default_from_schema;
+            }
+
+            // Specific type coercions and final defaults if still empty or for specific types
+            switch ($meta_key) {
+                case '_blft_ab_status':
+                    $meta_value = $meta_value ?: 'draft';
+                    break;
+                case '_blft_ab_variants':
+                    $meta_value = is_array($meta_value) ? $meta_value : [];
+                    break;
+                case '_blft_ab_goal_wc_any_product':
+                    // If it was an empty string and became `true` from schema default, this is fine.
+                    // If it was '0', it would be '0'. filter_var handles '0', '1', true, false, 'true', 'false' etc.
+                    $meta_value = filter_var($meta_value, FILTER_VALIDATE_BOOLEAN);
+                    break;
+                case '_blft_ab_goal_wc_product_id':
+                case '_blft_ab_goal_sd_percentage':
+                case '_blft_ab_goal_top_seconds':
+                    $meta_value = $meta_value === '' ? 0 : (int) $meta_value; // Default to 0 if empty after schema default
+                    break;
+                // For string types, if $meta_value is empty and schema default was also empty/null, it remains empty.
+            }
+            $post_data['meta'][ $meta_key ] = $meta_value;
         }
         
         $context = ! empty( $request['context'] ) ? $request['context'] : 'view';
