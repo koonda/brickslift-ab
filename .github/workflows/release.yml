@@ -10,6 +10,8 @@ on:
 jobs:
   build_and_package:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grant permissions to create releases
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
