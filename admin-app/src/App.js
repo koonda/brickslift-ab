@@ -22,97 +22,81 @@ const drawerWidth = 240;
 function App() {
   console.log('BricksLift A/B: App component rendered with Router.');
 
-  const drawer = (
+  // Define drawerWidth, can be moved to a constants file later
+  const drawerWidth = 240;
+
+  // Drawer content remains similar, but will be placed differently
+  const drawerContent = (
     <Box>
-      <Toolbar>
+      <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 1, backgroundColor: 'primary.main', color: 'white' }}>
+        {/* Placeholder for Logo - to be added */}
         <Typography variant="h6" noWrap component="div">
           BricksLift A/B
         </Typography>
       </Toolbar>
       <Divider />
       <List>
-        {/* Dashboard Link Example - if re-enabled */}
-        {/* <ListItem disablePadding>
-          <ListItemButton component={NavLink} to="/">
-            <ListItemIcon><DashboardIcon /></ListItemIcon>
-            <ListItemText primary="Dashboard" />
-          </ListItemButton>
-        </ListItem> */}
         <ListItem disablePadding>
-          <ListItemButton component={NavLink} to="/tests">
+          <ListItemButton component={NavLink} to="/tests" sx={{ '&.active': { backgroundColor: 'action.selected' } }}>
             <ListItemIcon><ListAltIcon /></ListItemIcon>
             <ListItemText primary="A/B Tests" />
           </ListItemButton>
         </ListItem>
-         <ListItem disablePadding>
-          <ListItemButton component={NavLink} to="/tests/new">
+        <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/tests/new" sx={{ '&.active': { backgroundColor: 'action.selected' } }}>
             <ListItemIcon><AddCircleOutlineIcon /></ListItemIcon>
             <ListItemText primary="Create Test" />
           </ListItemButton>
         </ListItem>
+        {/* Placeholder for Dashboard link if needed later */}
+        {/* <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/dashboard" sx={{ '&.active': { backgroundColor: 'action.selected' } }}>
+            <ListItemIcon><DashboardIcon /></ListItemIcon>
+            <ListItemText primary="Dashboard" />
+          </ListItemButton>
+        </ListItem> */}
       </List>
     </Box>
   );
-  
-  // Removed RouterNavLink component
 
   return (
     <Router>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 32px)' /* Adjust for WP admin bar if needed, or let WP handle scroll */ }}>
         <CssBaseline />
-        <AppBar
-          position="fixed"
+        {/* Sidebar Drawer - now part of the normal flow */}
+        <Drawer
+          variant="permanent"
           sx={{
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
-            ml: { sm: `${drawerWidth}px` },
-            top: '32px', // Offset for WordPress admin bar
+            width: drawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              position: 'relative', // No longer fixed, part of page flow
+              height: 'auto', // Or '100%' if parent Box has fixed height
+            },
           }}
         >
-          <Toolbar>
-            <Typography variant="h6" noWrap component="div">
-              A/B Testing Dashboard
-              {/* This could be dynamic based on route */}
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <Box
-          component="nav"
-          sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-          aria-label="mailbox folders"
-        >
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: 'none', sm: 'block' },
-              '& .MuiDrawer-paper': {
-                boxSizing: 'border-box',
-                width: drawerWidth,
-                top: '32px', // Offset for WordPress admin bar
-                height: 'calc(100vh - 32px)', // Adjust height to fill below admin bar
-              },
-            }}
-            open
-          >
-            {drawer}
-          </Drawer>
-        </Box>
+          {drawerContent}
+        </Drawer>
+
+        {/* Main Content Area */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
             p: 3,
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
-            ml: { sm: `${drawerWidth}px` } // Added margin for the drawer
+            // width: `calc(100% - ${drawerWidth}px)` // Width is handled by flexGrow
           }}
         >
-          <Toolbar /> {/* Spacer for AppBar */}
+          {/* No AppBar, so no Toolbar spacer needed here unless for other reasons */}
+          {/* Page title can be rendered by each page component or a wrapper */}
           <Routes>
             <Route path="/" element={<Navigate replace to="/tests" />} />
             {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
             <Route path="/tests" element={<TestListPage />} />
             <Route path="/tests/new" element={<TestEditPage />} />
             <Route path="/tests/edit/:testId" element={<TestEditPage />} />
-            {/* Add other routes here */}
           </Routes>
         </Box>
       </Box>
