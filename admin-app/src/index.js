@@ -16,7 +16,7 @@ const theme = createTheme({
   },
 });
 
-const rootElement = document.getElementById('brickslift-ab-admin-app');
+const rootElement = document.getElementById('blft-ab-admin-app');
 
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
@@ -30,5 +30,5 @@ if (rootElement) {
   );
   console.log('BricksLift A/B: React admin app initialized.');
 } else {
-  console.error('BricksLift A/B: Root element #brickslift-ab-admin-app not found.');
+  console.error('BricksLift A/B: Root element #blft-ab-admin-app not found.');
 }
