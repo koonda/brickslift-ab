@@ -1,0 +1,110 @@
+name: Plugin Release Packager
+
+on:
+  push:
+    branches:
+      - main # For testing the build process
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*' # For creating releases, e.g., v1.0.0, v1.2.3-beta
+
+jobs:
+  build_and_package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1' # WordPress coding standards recommend supporting older versions, but 8.1 is good for build tools. Code itself is 7.4+
+          extensions: mbstring, zip # zip for packaging, mbstring is common
+          tools: composer
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x' # A recent LTS version
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader # --no-dev is crucial for release
+
+      - name: Cache Node.js modules for admin-app
+        id: node-cache-admin
+        uses: actions/cache@v4
+        with:
+          path: admin-app/node_modules
+          key: ${{ runner.os }}-node-admin-${{ hashFiles('**/admin-app/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-admin-
+
+      - name: Install Node.js dependencies for admin-app
+        working-directory: ./admin-app
+        run: npm install
+
+      - name: Build React admin application
+        working-directory: ./admin-app
+        run: npm run build # Ensure 'build' script is correctly configured in admin-app/package.json
+
+      - name: Prepare plugin files for packaging
+        run: |
+          echo "Preparing files for packaging..."
+          mkdir -p staging/brickslift-ab
+          echo "Copying root files..."
+          cp brickslift-ab.php staging/brickslift-ab/
+          cp composer.json staging/brickslift-ab/
+          if [ -f composer.lock ]; then cp composer.lock staging/brickslift-ab/; fi
+          # cp readme.txt staging/brickslift-ab/ # Uncomment if/when readme.txt is added
+
+          echo "Copying directories..."
+          cp -R src staging/brickslift-ab/
+          cp -R vendor staging/brickslift-ab/
+          cp -R admin-app/build staging/brickslift-ab/admin-app/ # Copy built assets into admin-app directory
+
+          # Optional: Copy other standard WordPress plugin directories if they exist
+          # if [ -d "languages" ]; then cp -R languages staging/brickslift-ab/; fi
+          # if [ -d "assets" ]; then cp -R assets staging/brickslift-ab/; fi # General assets, not admin-app
+          # if [ -d "templates" ]; then cp -R templates staging/brickslift-ab/; fi
+
+          echo "Staging directory contents:"
+          ls -R staging
+          echo "Current directory contents:"
+          ls -la
+
+      - name: Create zip archive
+        run: |
+          echo "Creating zip archive..."
+          cd staging
+          zip -r ../brickslift-ab.zip ./brickslift-ab
+          cd ..
+          echo "Created brickslift-ab.zip successfully."
+          ls -l brickslift-ab.zip
+
+      - name: Upload artifact (for main branch pushes, for testing the build)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: brickslift-ab-package
+          path: brickslift-ab.zip
+
+      - name: Create GitHub Release and Upload Asset (for tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: brickslift-ab.zip
+          # The release will be named after the tag (e.g., v1.0.0)
+          # GITHUB_TOKEN is automatically available and used by the action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
