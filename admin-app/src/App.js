@@ -65,6 +65,7 @@ function App() {
           sx={{
             width: { sm: `calc(100% - ${drawerWidth}px)` },
             ml: { sm: `${drawerWidth}px` },
+            top: '32px', // Offset for WordPress admin bar
           }}
         >
           <Toolbar>
@@ -83,7 +84,12 @@ function App() {
             variant="permanent"
             sx={{
               display: { xs: 'none', sm: 'block' },
-              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: drawerWidth,
+                top: '32px', // Offset for WordPress admin bar
+                height: 'calc(100vh - 32px)', // Adjust height to fill below admin bar
+              },
             }}
             open
           >

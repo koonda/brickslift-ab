@@ -3,7 +3,7 @@
  * Plugin Name: BricksLift A/B
  * Plugin URI: https://brickslift.com/
  * Description: A/B testing for Bricks Builder.
- * Version: 0.1.7
+ * Version: 0.1.8
  * Author: Adam Kotala
  * Author URI: https://webypolopate.cz
  * License: GPLv2 or later
