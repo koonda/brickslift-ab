@@ -23,6 +23,7 @@ const TestFormBasicInfo = ({ formData, handleChange, errors }) => {
             value={formData.basicInfo.name || ''}
             onChange={handleInputChange}
             variant="outlined"
+            size="small" // Added size
             required
             error={!!errors?.name}
             helperText={errors?.name}
@@ -39,6 +40,7 @@ const TestFormBasicInfo = ({ formData, handleChange, errors }) => {
             multiline
             rows={4}
             variant="outlined"
+            size="small" // Added size
             InputLabelProps={{ shrink: true }}
           />
         </Grid>

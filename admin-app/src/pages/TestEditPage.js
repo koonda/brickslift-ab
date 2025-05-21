@@ -260,7 +260,7 @@ const TestEditPage = () => {
     setSaving(true);
     setError(null);
     const payload = {
-      title: formData.basicInfo.name,
+      title: { raw: formData.basicInfo.name }, // Send title as an object with 'raw' property
       status: formData.status, // WP post status, e.g., 'draft' or 'publish'
       meta: {
         _blft_ab_status: formData.meta._blft_ab_status || 'draft', // Plugin specific status

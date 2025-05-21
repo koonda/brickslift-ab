@@ -49,7 +49,7 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
             </Typography>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth margin="normal">
+                    <FormControl fullWidth margin="normal" variant="outlined" size="small">
                         <InputLabel id="goal-type-label">Goal Type</InputLabel>
                         <Select
                             labelId="goal-type-label"
@@ -80,10 +80,12 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                                 value={goalData._blft_ab_goal_pv_url || ''}
                                 onChange={handleInputChange}
                                 helperText="e.g., /thank-you or https://example.com/pricing"
+                                variant="outlined"
+                                size="small"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth margin="normal">
+                            <FormControl fullWidth margin="normal" variant="outlined" size="small">
                                 <InputLabel id="pv-url-match-type-label">URL Match Type</InputLabel>
                                 <Select
                                     labelId="pv-url-match-type-label"
@@ -112,6 +114,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                             value={goalData._blft_ab_goal_sc_element_selector || ''}
                             onChange={handleInputChange}
                             helperText="e.g., #submit-button or .cta-link"
+                            variant="outlined"
+                            size="small"
                         />
                     </Grid>
                 )}
@@ -127,10 +131,12 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                                 value={goalData._blft_ab_goal_fs_form_selector || ''}
                                 onChange={handleInputChange}
                                 helperText="e.g., form#contact-form or .wpcf7-form"
+                                variant="outlined"
+                                size="small"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth margin="normal">
+                            <FormControl fullWidth margin="normal" variant="outlined" size="small">
                                 <InputLabel id="fs-trigger-label">Submission Trigger</InputLabel>
                                 <Select
                                     labelId="fs-trigger-label"
@@ -155,6 +161,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                                     value={goalData._blft_ab_goal_fs_thank_you_url || ''}
                                     onChange={handleInputChange}
                                     helperText="Relative (e.g., /thanks) or absolute URL"
+                                    variant="outlined"
+                                    size="small"
                                 />
                             </Grid>
                         )}
@@ -168,6 +176,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                                     value={goalData._blft_ab_goal_fs_success_class || ''}
                                     onChange={handleInputChange}
                                     helperText="e.g., .form-submitted-ok"
+                                    variant="outlined"
+                                    size="small"
                                 />
                             </Grid>
                         )}
@@ -177,13 +187,14 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                 {goalData._blft_ab_goal_type === 'wc_add_to_cart' && (
                     <>
                         <Grid item xs={12} sm={6}>
-                             <FormControl fullWidth margin="normal">
+                             <FormControl fullWidth margin="normal" size="small">
                                 <FormControlLabel
                                     control={
                                         <Checkbox
                                             name="_blft_ab_goal_wc_any_product"
                                             checked={goalData._blft_ab_goal_wc_any_product === undefined ? true : Boolean(goalData._blft_ab_goal_wc_any_product)}
                                             onChange={handleInputChange}
+                                            size="small"
                                         />
                                     }
                                     label="Track for any product"
@@ -200,6 +211,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                                     type="number"
                                     value={goalData._blft_ab_goal_wc_product_id || ''}
                                     onChange={handleInputChange}
+                                    variant="outlined"
+                                    size="small"
                                 />
                             </Grid>
                         )}
@@ -218,6 +231,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                             onChange={handleInputChange}
                             InputProps={{ inputProps: { min: 0, max: 100 } }}
                             helperText="Enter a value between 0 and 100"
+                            variant="outlined"
+                            size="small"
                         />
                     </Grid>
                 )}
@@ -233,6 +248,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                             value={goalData._blft_ab_goal_top_seconds || ''}
                             onChange={handleInputChange}
                             InputProps={{ inputProps: { min: 0 } }}
+                            variant="outlined"
+                            size="small"
                         />
                     </Grid>
                 )}
@@ -247,6 +264,8 @@ const TestFormGoals = ({ goalData, onGoalDataChange }) => {
                             value={goalData._blft_ab_goal_cje_event_name || ''}
                             onChange={handleInputChange}
                             helperText="e.g., myCustomConversionEvent"
+                            variant="outlined"
+                            size="small"
                         />
                     </Grid>
                 )}

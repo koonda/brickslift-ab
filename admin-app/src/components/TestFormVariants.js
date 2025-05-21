@@ -19,36 +19,54 @@ const TestFormVariants = ({ formData, handleChange, errors }) => {
   console.log('TestFormVariants rendered. FormData:', formData, "Errors:", errors);
 
   const handleVariantChange = (index, field, value) => {
-    const newVariants = [...formData.variants];
+    let newVariants = [...formData.variants];
     newVariants[index][field] = value;
-    // Ensure distribution is a number
+
     if (field === 'distribution') {
-        newVariants[index][field] = Number(value) || 0;
+      const newDistribution = Math.max(0, Math.min(100, Number(value) || 0));
+      newVariants[index][field] = newDistribution;
+
+      // If exactly two variants, auto-adjust the other
+      if (newVariants.length === 2) {
+        const otherIndex = index === 0 ? 1 : 0;
+        newVariants[otherIndex].distribution = 100 - newDistribution;
+      }
     }
     handleChange('variants', newVariants);
   };
 
   const addVariant = () => {
-    const newVariant = {
-      id: generateUUID(), // Ensure this function is available
-      name: `Variant ${formData.variants.length + 1}`,
-      distribution: formData.variants.length === 0 ? 100 : 0, // Default first variant to 100%
-    };
-    const updatedVariants = [...formData.variants, newVariant];
-    
-    // Auto-adjust distribution if adding more than one variant
-    if (updatedVariants.length > 1) {
-        const totalVariants = updatedVariants.length;
-        const equalDistribution = Math.floor(100 / totalVariants);
-        const remainder = 100 % totalVariants;
-        
-        for (let i = 0; i < totalVariants; i++) {
-            updatedVariants[i].distribution = equalDistribution + (i < remainder ? 1 : 0);
-        }
-    } else if (updatedVariants.length === 1) {
-        updatedVariants[0].distribution = 100;
+    if (formData.variants.length >= 2) {
+      return; // Do not add more than 2 variants
     }
 
+    let newVariantName = `Variant ${formData.variants.length + 1}`;
+    if (formData.variants.length === 0) {
+        newVariantName = 'Variant A';
+    } else if (formData.variants.length === 1) {
+        newVariantName = 'Variant B';
+    }
+
+    const newVariant = {
+      id: generateUUID(),
+      name: newVariantName,
+      distribution: 0, // Will be adjusted below
+    };
+    
+    let updatedVariants = [...formData.variants, newVariant];
+
+    // Auto-adjust distribution
+    if (updatedVariants.length === 1) {
+        updatedVariants[0].distribution = 100;
+    } else if (updatedVariants.length === 2) {
+        // If adding the second variant, try to split 50/50 or give remainder to the first
+        // This logic is now simpler as the first one would be 100.
+        // When the second is added, the first one's slider can be used to adjust.
+        // For now, let's set the new one to 0 and the first one remains 100,
+        // or set both to 50 if adding the second.
+        updatedVariants[0].distribution = 50;
+        updatedVariants[1].distribution = 50;
+    }
     handleChange('variants', updatedVariants);
   };
 
@@ -86,6 +104,7 @@ const TestFormVariants = ({ formData, handleChange, errors }) => {
           startIcon={<AddCircleOutlineIcon />}
           onClick={addVariant}
           size="small"
+          disabled={formData.variants.length >= 2} // Disable if 2 variants already exist
         >
           Add Variant
         </Button>
