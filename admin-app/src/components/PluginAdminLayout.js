@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Drawer,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Collapse,
   Paper,
-  AppBar,
-  Toolbar,
   Typography,
-  CssBaseline,
+  Tabs,
+  Tab,
   useTheme,
 } from '@mui/material';
 import {
@@ -22,205 +19,173 @@ import {
   Policy as PolicyIcon,
   MoreHoriz as MoreHorizIcon,
   CreditCard as CreditCardIcon,
-  ExpandLess,
-  ExpandMore,
 } from '@mui/icons-material';
+import TestListPage from '../pages/TestListPage';
+import TestEditPage from '../pages/TestEditPage';
 
-const drawerWidth = 280;
+const TabPanel = (props) => {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`plugin-tabpanel-${index}`}
+      aria-labelledby={`plugin-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+};
 
 const PluginAdminLayout = () => {
   const theme = useTheme();
-  const [selectedPage, setSelectedPage] = useState('Dashboard');
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [primaryTab, setPrimaryTab] = useState(0);
+  const [selectedSettingsPage, setSelectedSettingsPage] = useState('General');
+  const [abTestSubPage, setAbTestSubPage] = useState('list'); // 'list' or 'create'
 
-  const handleNavigationClick = (pageName) => {
-    setSelectedPage(pageName);
-    if (!pageName.startsWith('Settings/')) {
-      setSettingsOpen(false);
+  const handlePrimaryTabChange = (event, newValue) => {
+    setPrimaryTab(newValue);
+    // Reset to list view when switching to A/B Tests tab
+    if (newValue === 1) {
+      setAbTestSubPage('list');
     }
   };
 
-  const handleSettingsClick = () => {
-    setSettingsOpen(!settingsOpen);
-    // Optionally, select a default settings page or clear selection
-    // setSelectedPage('Settings'); // Or null if settings itself is not a page
+  const handleSettingsNavigationClick = (pageName) => {
+    setSelectedSettingsPage(pageName);
   };
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, pageId: 'Dashboard' },
-    { text: 'A/B Tests', icon: <AnalyticsIcon />, pageId: 'A/B Tests' },
-    {
-      text: 'Settings',
-      icon: <SettingsIcon />,
-      pageId: 'Settings', // Main settings toggle
-      subItems: [
-        { text: 'General', icon: <TuneIcon />, pageId: 'Settings/General' },
-        { text: 'GDPR', icon: <PolicyIcon />, pageId: 'Settings/GDPR' },
-        { text: 'Other', icon: <MoreHorizIcon />, pageId: 'Settings/Other' },
-        { text: 'License', icon: <CreditCardIcon />, pageId: 'Settings/License' },
-      ],
-    },
+  const handleNavigateToCreateTest = () => {
+    setAbTestSubPage('create');
+  };
+
+  const handleNavigateToTestList = () => {
+    setAbTestSubPage('list');
+  };
+
+  const settingsMenuItems = [
+    { text: 'General', icon: <TuneIcon />, pageId: 'General' },
+    { text: 'GDPR', icon: <PolicyIcon />, pageId: 'GDPR' },
+    { text: 'Other', icon: <MoreHorizIcon />, pageId: 'Other' },
+    { text: 'License', icon: <CreditCardIcon />, pageId: 'License' },
   ];
 
-  const renderContent = () => {
-    switch (selectedPage) {
-      case 'Dashboard':
-        return <Typography variant="h4">Dashboard Content</Typography>;
-      case 'A/B Tests':
-        return <Typography variant="h4">A/B Tests Content</Typography>;
-      case 'Settings/General':
-        return <Typography variant="h4">General Settings Content</Typography>;
-      case 'Settings/GDPR':
-        return <Typography variant="h4">GDPR Settings Content</Typography>;
-      case 'Settings/Other':
-        return <Typography variant="h4">Other Settings Content</Typography>;
-      case 'Settings/License':
-        return <Typography variant="h4">License Settings Content</Typography>;
+  const renderSettingsContent = () => {
+    switch (selectedSettingsPage) {
+      case 'General':
+        return <Typography variant="h5">General Settings Content</Typography>;
+      case 'GDPR':
+        return <Typography variant="h5">GDPR Settings Content</Typography>;
+      case 'Other':
+        return <Typography variant="h5">Other Settings Content</Typography>;
+      case 'License':
+        return <Typography variant="h5">License Settings Content</Typography>;
       default:
-        return <Typography variant="h4">Welcome</Typography>;
+        return <Typography variant="h5">Select a setting</Typography>;
     }
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh' }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: `calc(100% - ${drawerWidth}px)`,
-          ml: `${drawerWidth}px`,
-          zIndex: theme.zIndex.drawer + 1,
-        }}
-      >
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            BricksLift A/B - {selectedPage}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            backgroundColor: theme.palette.sidebar.background,
-            color: theme.palette.sidebar.text,
-            borderRadius: `0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0`,
-          },
-        }}
-      >
-        <Toolbar>
-            <Typography variant="h5" sx={{ color: theme.palette.sidebar.text, width: '100%', textAlign: 'center', fontWeight:'bold' }}>
-                BricksLift A/B
-            </Typography>
-        </Toolbar>
-        <Box sx={{ overflow: 'auto', p: 1 }}>
-          <List component="nav">
-            {menuItems.map((item) =>
-              item.subItems ? (
-                <React.Fragment key={item.text}>
-                  <ListItemButton
-                    onClick={handleSettingsClick}
-                    selected={selectedPage.startsWith('Settings/') || settingsOpen}
-                    sx={{
-                        '&.Mui-selected': {
-                            backgroundColor: theme.palette.sidebar.activeBackground,
-                            color: theme.palette.sidebar.activeText,
-                            '& .MuiListItemIcon-root': {
-                                color: theme.palette.sidebar.activeText,
-                            },
-                        },
-                        '&:hover': {
-                            backgroundColor: theme.palette.sidebar.hoverBackground,
-                        },
-                        color: theme.palette.sidebar.text,
-                    }}
-                  >
-                    <ListItemIcon sx={{color: 'inherit'}}>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.text} />
-                    {settingsOpen ? <ExpandLess /> : <ExpandMore />}
-                  </ListItemButton>
-                  <Collapse in={settingsOpen} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding sx={{ pl: 2 }}>
-                      {item.subItems.map((subItem) => (
-                        <ListItemButton
-                          key={subItem.text}
-                          selected={selectedPage === subItem.pageId}
-                          onClick={() => handleNavigationClick(subItem.pageId)}
-                          sx={{
-                            '&.Mui-selected': {
-                                backgroundColor: theme.palette.sidebar.activeBackground,
-                                color: theme.palette.sidebar.activeText,
-                                '& .MuiListItemIcon-root': {
-                                    color: theme.palette.sidebar.activeText,
-                                },
-                            },
-                            '&:hover': {
-                                backgroundColor: theme.palette.sidebar.hoverBackground,
-                            },
-                            color: theme.palette.sidebar.text,
-                          }}
-                        >
-                          <ListItemIcon sx={{color: 'inherit'}}>{subItem.icon}</ListItemIcon>
-                          <ListItemText primary={subItem.text} />
-                        </ListItemButton>
-                      ))}
-                    </List>
-                  </Collapse>
-                </React.Fragment>
-              ) : (
-                <ListItemButton
-                  key={item.text}
-                  selected={selectedPage === item.pageId}
-                  onClick={() => handleNavigationClick(item.pageId)}
-                  sx={{
-                    '&.Mui-selected': {
-                        backgroundColor: theme.palette.sidebar.activeBackground,
-                        color: theme.palette.sidebar.activeText,
-                        '& .MuiListItemIcon-root': {
-                            color: theme.palette.sidebar.activeText,
-                        },
-                    },
-                    '&:hover': {
-                        backgroundColor: theme.palette.sidebar.hoverBackground,
-                    },
-                    color: theme.palette.sidebar.text,
-                  }}
-                >
-                  <ListItemIcon sx={{color: 'inherit'}}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              )
-            )}
-          </List>
-        </Box>
-      </Drawer>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          bgcolor: 'background.default',
-          p: 3,
-          height: '100vh',
-          overflow: 'auto',
-        }}
-      >
-        <Toolbar /> {/* For spacing below the AppBar */}
-        <Paper
-          elevation={3}
+    <Paper elevation={3} sx={{ 
+        borderRadius: theme.shape.borderRadius, 
+        m: 2, // Margin to ensure it's contained
+        overflow: 'hidden' // Ensures children adhere to border radius
+      }}
+    >
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs 
+          value={primaryTab} 
+          onChange={handlePrimaryTabChange} 
+          aria-label="Plugin primary navigation tabs"
+          indicatorColor="secondary"
+          textColor="inherit"
           sx={{
-            p: 3,
-            borderRadius: theme.shape.borderRadius,
-            minHeight: 'calc(100vh - 64px - 48px)', // Adjust based on AppBar and padding
+            '& .MuiTab-root': {
+              color: theme.palette.text.secondary, // Use theme for text color
+              '&.Mui-selected': {
+                color: theme.palette.secondary.main, // Use theme for selected text color
+              },
+            },
+            backgroundColor: theme.palette.background.paper, // Ensure tabs background matches paper
+            borderTopLeftRadius: theme.shape.borderRadius,
+            borderTopRightRadius: theme.shape.borderRadius,
           }}
         >
-          {renderContent()}
-        </Paper>
+          <Tab label="Dashboard" icon={<DashboardIcon />} iconPosition="start" id="plugin-tab-0" aria-controls="plugin-tabpanel-0" />
+          <Tab label="A/B Tests" icon={<AnalyticsIcon />} iconPosition="start" id="plugin-tab-1" aria-controls="plugin-tabpanel-1" />
+          <Tab label="Settings" icon={<SettingsIcon />} iconPosition="start" id="plugin-tab-2" aria-controls="plugin-tabpanel-2" />
+        </Tabs>
       </Box>
-    </Box>
+
+      <TabPanel value={primaryTab} index={0}>
+        <Typography variant="h4">Dashboard Content</Typography>
+        <Typography>This is where the main dashboard overview will be displayed.</Typography>
+      </TabPanel>
+      <TabPanel value={primaryTab} index={1}>
+        {abTestSubPage === 'list' && (
+          <TestListPage onCreateNewTestClick={handleNavigateToCreateTest} />
+        )}
+        {abTestSubPage === 'create' && (
+          <TestEditPage onCancel={handleNavigateToTestList} />
+        )}
+      </TabPanel>
+      <TabPanel value={primaryTab} index={2}>
+        <Typography variant="h4" gutterBottom>Settings</Typography>
+        <Box sx={{ display: 'flex' }}>
+          <Box sx={{ 
+            width: '240px', 
+            flexShrink: 0, 
+            borderRight: 1, 
+            borderColor: 'divider',
+            mr: 2,
+            backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900], // Subtle background for settings nav
+            borderRadius: theme.shape.borderRadius,
+            p:1
+          }}>
+            <List component="nav" dense>
+              {settingsMenuItems.map((item) => (
+                <ListItemButton
+                  key={item.text}
+                  selected={selectedSettingsPage === item.pageId}
+                  onClick={() => handleSettingsNavigationClick(item.pageId)}
+                  sx={{ // Using styles from pluginTheme for consistency
+                    '&.Mui-selected': {
+                      backgroundColor: theme.palette.sidebar?.activeBackground || theme.palette.action.selected,
+                      color: theme.palette.sidebar?.activeText || theme.palette.text.primary,
+                      '& .MuiListItemIcon-root': {
+                        color: theme.palette.sidebar?.activeText || theme.palette.text.primary,
+                      },
+                      '&:hover': {
+                        backgroundColor: theme.palette.sidebar?.activeBackground || theme.palette.action.selected,
+                      }
+                    },
+                    '&:hover': {
+                      backgroundColor: theme.palette.sidebar?.hoverBackground || theme.palette.action.hover,
+                    },
+                    color: theme.palette.sidebar?.text || theme.palette.text.secondary,
+                    borderRadius: '4px',
+                    margin: '4px 0px', // Adjusted margin
+                    padding: '8px 12px', // Adjusted padding
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit', minWidth: '36px' }}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+          <Box sx={{ flexGrow: 1, pl: 2 }}>
+            {renderSettingsContent()}
+          </Box>
+        </Box>
+      </TabPanel>
+    </Paper>
   );
 };
 

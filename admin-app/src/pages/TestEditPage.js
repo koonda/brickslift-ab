@@ -54,9 +54,9 @@ const initialFormData = {
   }
 };
 
-const TestEditPage = () => {
+const TestEditPage = ({ onCancel }) => {
   const { testId } = useParams();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Keep for navigation on save
   const isEditMode = Boolean(testId);
 
   const [activeStep, setActiveStep] = useState(0);
@@ -342,28 +342,37 @@ const TestEditPage = () => {
         
         <form onSubmit={(e) => e.preventDefault()}>
             {getStepContent(activeStep)}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
                 <Button
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                sx={{ mr: 1 }}
+                  onClick={onCancel}
+                  sx={{ mr: 1 }}
+                  variant="outlined" // Added variant for distinction
                 >
-                Back
+                  Cancel
                 </Button>
-                {activeStep === steps.length - 1 ? (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSubmit}
-                    disabled={saving}
-                >
-                    {saving ? <CircularProgress size={24} /> : (isEditMode ? 'Save Changes' : 'Create Test')}
-                </Button>
-                ) : (
-                <Button variant="contained" color="primary" onClick={handleNext}>
-                    Next
-                </Button>
-                )}
+                <Box> {/* Group Back and Next/Submit buttons */}
+                  <Button
+                    disabled={activeStep === 0}
+                    onClick={handleBack}
+                    sx={{ mr: 1 }}
+                  >
+                    Back
+                  </Button>
+                  {activeStep === steps.length - 1 ? (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSubmit}
+                        disabled={saving}
+                    >
+                        {saving ? <CircularProgress size={24} /> : (isEditMode ? 'Save Changes' : 'Create Test')}
+                    </Button>
+                  ) : (
+                    <Button variant="contained" color="primary" onClick={handleNext}>
+                        Next
+                    </Button>
+                  )}
+                </Box>
             </Box>
         </form>
       </Paper>

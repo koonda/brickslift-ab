@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+// Removed RouterLink and useNavigate as navigation for create is handled by parent
 import {
   Box,
   Button,
@@ -23,14 +23,15 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import { fetchTests, deleteTest, updateTest } from '../services/api';
+import { Link as RouterLink } from 'react-router-dom'; // Keep for Edit button
 
-const TestListPage = () => {
+const TestListPage = ({ onCreateNewTestClick }) => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const navigate = useNavigate();
+  // navigate hook removed
 
   const loadTests = useCallback(async () => {
     setLoading(true);
@@ -119,8 +120,7 @@ const TestListPage = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          component={RouterLink}
-          to="/tests/new"
+          onClick={onCreateNewTestClick} // Changed to use prop
         >
           Create New Test
         </Button>
